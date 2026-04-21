@@ -1,0 +1,14 @@
+# Copy this file to `toyyibpay.properties` (same folder) and fill in values.
+# Priority order: Environment variables > toyyibpay.properties > defaults.
+
+# Required for ToyyibPay
+toyyibpay.secret_key=
+
+# Optional (defaults shown)
+toyyibpay.cat_booking=nrp9me01
+toyyibpay.cat_donation=d6hgyn2q
+toyyibpay.base_url=https://toyyibpay.com/
+
+# Optional: your public base URL for ToyyibPay return/callback (ngrok)
+mms.public_base_url=https://xxxx.ngrok-free.dev
+

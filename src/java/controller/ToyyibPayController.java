@@ -14,17 +14,10 @@ import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Properties;
 
 @WebServlet(name = "ToyyibPayController", urlPatterns = {"/payment/createBill", "/payment/return"})
 public class ToyyibPayController extends HttpServlet {
-
-    // ===== CREDENTIALS (LIVE/BIRU) =====
-    private static final String SECRET_KEY   = getEnvOrDefault("TOYYIBPAY_SECRET_KEY", "");
-    private static final String CAT_BOOKING  = getEnvOrDefault("TOYYIBPAY_CAT_BOOKING", "nrp9me01");
-    private static final String CAT_DONATION = getEnvOrDefault("TOYYIBPAY_CAT_DONATION", "d6hgyn2q");
-
-    // PENTING: Menggunakan URL Live kerana dashboard anda berwarna biru
-    private static final String TOYYIBPAY_URL = normalizeBaseUrl(getEnvOrDefault("TOYYIBPAY_BASE_URL", "https://toyyibpay.com/"));
 
     // ===== NGROK URL =====
     // Kemaskini link ngrok baru di sini setiap kali anda restart ngrok
@@ -34,8 +27,24 @@ public class ToyyibPayController extends HttpServlet {
 
     private BookingDAO bookingDAO;
 
+    private Properties fileConfig = new Properties();
+    private String secretKey = "";
+    private String catBooking = "nrp9me01";
+    private String catDonation = "d6hgyn2q";
+    private String toyyibpayBaseUrl = "https://toyyibpay.com/";
+    private String publicBaseUrl = NGROK_URL;
+
     @Override
-    public void init() { bookingDAO = new BookingDAO(); }
+    public void init() {
+        bookingDAO = new BookingDAO();
+        fileConfig = loadConfigProperties();
+
+        secretKey = getConfig("TOYYIBPAY_SECRET_KEY", "toyyibpay.secret_key", "");
+        catBooking = getConfig("TOYYIBPAY_CAT_BOOKING", "toyyibpay.cat_booking", "nrp9me01");
+        catDonation = getConfig("TOYYIBPAY_CAT_DONATION", "toyyibpay.cat_donation", "d6hgyn2q");
+        toyyibpayBaseUrl = normalizeBaseUrl(getConfig("TOYYIBPAY_BASE_URL", "toyyibpay.base_url", "https://toyyibpay.com/"));
+        publicBaseUrl = normalizePublicBaseUrl(getConfig("MMS_PUBLIC_BASE_URL", "mms.public_base_url", NGROK_URL));
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -107,10 +116,10 @@ public class ToyyibPayController extends HttpServlet {
 
             System.out.println("=== ToyyibPay Booking ===");
             System.out.println("Booking ID  : " + bookingId);
-            System.out.println("API URL     : " + TOYYIBPAY_URL + "index.php/api/createBill");
+            System.out.println("API URL     : " + toyyibpayBaseUrl + "index.php/api/createBill");
 
             String billCode = createBill(
-                CAT_BOOKING,
+                catBooking,
                 "Tempahan Masjid #" + bookingId,
                 "Bayaran bagi " + (booking.getFacilityName() != null ? booking.getFacilityName() : "Fasiliti"),
                 amountSen, returnUrl, "MMS-B-" + bookingId,
@@ -125,7 +134,7 @@ public class ToyyibPayController extends HttpServlet {
                 savePaymentRecord(bookingId, booking.getTotalAmount(), billCode);
                 
                 // PEMBETULAN: Menggunakan path runBill yang betul untuk melompat ke bank
-                String redirectUrl = TOYYIBPAY_URL + "index.php/api/runBill/" + billCode;
+                String redirectUrl = toyyibpayBaseUrl + "index.php/api/runBill/" + billCode;
                 System.out.println("Redirecting to: " + redirectUrl);
                 resp.sendRedirect(redirectUrl);
             } else {
@@ -158,7 +167,7 @@ public class ToyyibPayController extends HttpServlet {
             String returnUrl  = buildReturnUrl("donation", donationId);
 
             String billCode = createBill(
-                CAT_DONATION,
+                catDonation,
                 "Sumbangan Masjid #" + donationId,
                 "Sumbangan kepada masjid",
                 amountSen, returnUrl, "MMS-D-" + donationId,
@@ -169,7 +178,7 @@ public class ToyyibPayController extends HttpServlet {
 
             if (billCode != null && !billCode.isEmpty()) {
                 // PEMBETULAN: Menggunakan path runBill yang betul
-                resp.sendRedirect(TOYYIBPAY_URL + "index.php/api/runBill/" + billCode);
+                resp.sendRedirect(toyyibpayBaseUrl + "index.php/api/runBill/" + billCode);
             } else {
                 req.setAttribute("simMode", true);
                 req.getRequestDispatcher("/payment.jsp").forward(req, resp);
@@ -186,12 +195,12 @@ public class ToyyibPayController extends HttpServlet {
                                long amountSen, String returnUrl, String refNo,
                                String email, String phone, String toName) throws IOException {
 
-        if (SECRET_KEY == null || SECRET_KEY.trim().isEmpty()) {
+        if (secretKey == null || secretKey.trim().isEmpty()) {
             System.out.println("ToyyibPay config missing: TOYYIBPAY_SECRET_KEY");
             return null;
         }
 
-        URL url = new URL(TOYYIBPAY_URL + "index.php/api/createBill");
+        URL url = new URL(toyyibpayBaseUrl + "index.php/api/createBill");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setDoOutput(true);
         conn.setRequestMethod("POST");
@@ -199,7 +208,7 @@ public class ToyyibPayController extends HttpServlet {
 
         String safeName = billName.length() > 30 ? billName.substring(0, 30) : billName;
 
-        String data = "userSecretKey="   + URLEncoder.encode(SECRET_KEY,   "UTF-8")
+        String data = "userSecretKey="   + URLEncoder.encode(secretKey,   "UTF-8")
             + "&categoryCode="           + URLEncoder.encode(categoryCode,  "UTF-8")
             + "&billName="               + URLEncoder.encode(safeName,      "UTF-8")
             + "&billDescription="        + URLEncoder.encode(billDesc,      "UTF-8")
@@ -259,31 +268,31 @@ public class ToyyibPayController extends HttpServlet {
     }
 
     private String buildReturnUrl(String type, int id) {
-        return getPublicBaseUrl() + APP_CONTEXT + "/payment/return?type=" + type + "&id=" + id;
+        return publicBaseUrl + APP_CONTEXT + "/payment/return?type=" + type + "&id=" + id;
     }
 
-    private static String getPublicBaseUrl() {
-        String env = System.getenv("MMS_PUBLIC_BASE_URL");
-        if (env == null) {
-            return NGROK_URL;
+    private Properties loadConfigProperties() {
+        Properties props = new Properties();
+        try (InputStream is = getServletContext().getResourceAsStream("/WEB-INF/toyyibpay.properties")) {
+            if (is != null) {
+                props.load(is);
+            }
+        } catch (Exception e) {
+            System.out.println("ToyyibPay config load error: " + e.getMessage());
         }
-        String trimmed = env.trim();
-        if (trimmed.isEmpty()) {
-            return NGROK_URL;
-        }
-        while (trimmed.endsWith("/")) {
-            trimmed = trimmed.substring(0, trimmed.length() - 1);
-        }
-        return trimmed.isEmpty() ? NGROK_URL : trimmed;
+        return props;
     }
 
-    private static String getEnvOrDefault(String name, String fallback) {
-        String value = System.getenv(name);
-        if (value == null) {
-            return fallback;
+    private String getConfig(String envName, String propKey, String fallback) {
+        String envValue = System.getenv(envName);
+        if (envValue != null && !envValue.trim().isEmpty()) {
+            return envValue.trim();
         }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? fallback : trimmed;
+        String propValue = fileConfig.getProperty(propKey);
+        if (propValue != null && !propValue.trim().isEmpty()) {
+            return propValue.trim();
+        }
+        return fallback;
     }
 
     private static String normalizeBaseUrl(String url) {
@@ -292,6 +301,14 @@ public class ToyyibPayController extends HttpServlet {
             return "";
         }
         return trimmed.endsWith("/") ? trimmed : (trimmed + "/");
+    }
+
+    private static String normalizePublicBaseUrl(String url) {
+        String trimmed = url == null ? "" : url.trim();
+        while (trimmed.endsWith("/")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed.isEmpty() ? NGROK_URL : trimmed;
     }
 
     private void savePaymentRecord(int bookingId, double amount, String billCode) throws SQLException {

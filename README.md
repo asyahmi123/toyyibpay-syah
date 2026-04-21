@@ -8,7 +8,14 @@
 
 ## ToyyibPay configuration
 
-This project supports overriding ToyyibPay settings via environment variables:
+This project supports configuring ToyyibPay via either:
+
+1) Environment variables (recommended), or
+2) A local properties file at `web/WEB-INF/toyyibpay.properties` (not committed to Git)
+
+Priority order: Environment variables > `toyyibpay.properties` > defaults.
+
+### Environment variables
 
 - `TOYYIBPAY_SECRET_KEY`
 - `TOYYIBPAY_CAT_BOOKING`
@@ -18,3 +25,6 @@ This project supports overriding ToyyibPay settings via environment variables:
 
 Note: Avoid committing real payment secrets to GitHub (prefer a private repo, and/or store secrets outside source code).
 
+### Properties file
+
+Copy `web/WEB-INF/toyyibpay.properties.example` to `web/WEB-INF/toyyibpay.properties` and fill in values.

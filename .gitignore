@@ -16,3 +16,5 @@ Thumbs.db
 .env
 .env.*
 
+# Local payment config (do not commit secrets)
+/web/WEB-INF/toyyibpay.properties
