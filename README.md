@@ -3,6 +3,11 @@
 ## Running (NetBeans / Tomcat)
 
 1. Open the project folder in NetBeans.
+2. Put required JARs into `web/WEB-INF/lib`:
+   - `mysql-connector-j-9.2.0.jar`
+   - `taglibs-standard-impl-1.2.5.jar`
+   - `taglibs-standard-jstlel-1.2.5.jar`
+   - `taglibs-standard-spec-1.2.5.jar`
 2. Configure your MySQL database and update `src/java/util/DBConnection.java` if needed.
 3. Run the project on Tomcat.
 
