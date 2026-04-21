@@ -1,0 +1,18 @@
+# NetBeans / Ant build outputs
+/build/
+/dist/
+
+# NetBeans private settings (user/machine-specific)
+/nbproject/private/
+
+# IDE / OS noise
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local env files
+.env
+.env.*
+
