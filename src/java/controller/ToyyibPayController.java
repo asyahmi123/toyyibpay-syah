@@ -140,12 +140,14 @@ public class ToyyibPayController extends HttpServlet {
             } else {
                 req.setAttribute("booking", booking);
                 req.setAttribute("simMode", true);
+                req.setAttribute("payError", "Tidak dapat cipta bil ToyyibPay. Sila semak Secret Key / Base URL.");
                 req.getRequestDispatcher("/payment.jsp").forward(req, resp);
             }
 
         } catch (Exception e) {
             System.out.println("ToyyibPay error: " + e.getMessage());
             e.printStackTrace();
+            req.getSession().setAttribute("payError", "Bayaran ToyyibPay gagal diproses. Sila cuba lagi atau semak konfigurasi ToyyibPay.");
             resp.sendRedirect(req.getContextPath() + "/bookings");
         }
     }
@@ -181,11 +183,14 @@ public class ToyyibPayController extends HttpServlet {
                 resp.sendRedirect(toyyibpayBaseUrl + "index.php/api/runBill/" + billCode);
             } else {
                 req.setAttribute("simMode", true);
+                req.setAttribute("payError", "Tidak dapat cipta bil ToyyibPay. Sila semak Secret Key / Base URL.");
                 req.getRequestDispatcher("/payment.jsp").forward(req, resp);
             }
 
         } catch (Exception e) {
             System.out.println("Donation error: " + e.getMessage());
+            req.setAttribute("simMode", true);
+            req.setAttribute("payError", "Bayaran ToyyibPay gagal diproses. Sila cuba lagi atau semak konfigurasi ToyyibPay.");
             req.getRequestDispatcher("/payment.jsp").forward(req, resp);
         }
     }

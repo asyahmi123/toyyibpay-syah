@@ -292,6 +292,11 @@
                 color:#92400e;
                 border:1px solid #fde68a;
             }
+            .alert-error{
+                background:#fee2e2;
+                color:#991b1b;
+                border:1px solid #fecaca;
+            }
             .alert-canceled{
                 background:#f3f4f6;
                 color:#6b7280;
@@ -545,6 +550,10 @@
             </c:if>
             <c:if test="${param.msg == 'canceled'}">
                 <div class="alert alert-canceled"><i class="fa-solid fa-circle-xmark"></i> Tempahan telah dibatalkan.</div>
+            </c:if>
+            <c:if test="${not empty sessionScope.payError}">
+                <div class="alert alert-error"><i class="fa-solid fa-circle-exclamation"></i> ${sessionScope.payError}</div>
+                <c:remove var="payError" scope="session"/>
             </c:if>
 
             <!-- Stats -->

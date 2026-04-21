@@ -347,6 +347,17 @@
 
         <div class="main">
 
+            <c:if test="${not empty payError}">
+                <div class="status-card" style="margin-bottom:16px;">
+                    <div class="status-icon icon-fail"><i class="fa-solid fa-circle-exclamation"></i></div>
+                    <div class="status-title" style="color:#b91c1c;">ToyyibPay Tidak Dapat Diproses</div>
+                    <div class="status-sub">${payError}</div>
+                    <a href="${pageContext.request.contextPath}/bookings" class="btn-back" style="margin-top:10px;">
+                        <i class="fa-solid fa-arrow-left"></i> Kembali
+                    </a>
+                </div>
+            </c:if>
+
             <%-- ══ 1. SELEPAS BALIK DARI TOYYIBPAY (ada paySuccess) ══ --%>
             <c:if test="${paySuccess != null}">
                 <c:choose>
