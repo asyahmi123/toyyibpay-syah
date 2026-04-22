@@ -18,3 +18,9 @@ Thumbs.db
 
 # Local payment config (do not commit secrets)
 /web/WEB-INF/toyyibpay.properties
+
+# Local tooling downloads
+/.tools/
+
+# Local dependency jars (downloaded by scripts)
+/web/WEB-INF/lib/*.jar
