@@ -15,6 +15,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Properties;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 @WebServlet(name = "ToyyibPayController", urlPatterns = {"/payment/createBill", "/payment/return"})
 public class ToyyibPayController extends HttpServlet {
@@ -31,7 +33,7 @@ public class ToyyibPayController extends HttpServlet {
     private String secretKey = "";
     private String catBooking = "nrp9me01";
     private String catDonation = "d6hgyn2q";
-    private String toyyibpayBaseUrl = "https://toyyibpay.com/";
+    private String toyyibpayBaseUrl = "https://dev.toyyibpay.com/";
     private String publicBaseUrl = NGROK_URL;
 
     @Override
@@ -134,7 +136,7 @@ public class ToyyibPayController extends HttpServlet {
                 savePaymentRecord(bookingId, booking.getTotalAmount(), billCode);
                 
                 // PEMBETULAN: Menggunakan path runBill yang betul untuk melompat ke bank
-                String redirectUrl = toyyibpayBaseUrl + "index.php/api/runBill/" + billCode;
+                String redirectUrl = toyyibpayBaseUrl + billCode;
                 System.out.println("Redirecting to: " + redirectUrl);
                 resp.sendRedirect(redirectUrl);
             } else {
@@ -180,7 +182,7 @@ public class ToyyibPayController extends HttpServlet {
 
             if (billCode != null && !billCode.isEmpty()) {
                 // PEMBETULAN: Menggunakan path runBill yang betul
-                resp.sendRedirect(toyyibpayBaseUrl + "index.php/api/runBill/" + billCode);
+                resp.sendRedirect(toyyibpayBaseUrl + billCode);
             } else {
                 req.setAttribute("simMode", true);
                 req.setAttribute("payError", "Tidak dapat cipta bil ToyyibPay. Sila semak Secret Key / Base URL.");
@@ -338,17 +340,17 @@ public class ToyyibPayController extends HttpServlet {
         }
     }
 
-    private String parseBillCode(String json) {
-        try {
-            if (json == null || json.trim().isEmpty()) return null;
-            int idx = json.indexOf("BillCode");
-            if (idx == -1) return null;
-            int colon = json.indexOf(":", idx);
-            int q1    = json.indexOf("\"", colon + 1);
-            int q2    = json.indexOf("\"", q1 + 1);
-            return json.substring(q1 + 1, q2).trim();
-        } catch (Exception e) {
-            return null;
+  private String parseBillCode(String json) {
+    try {
+        if (json == null || json.trim().isEmpty()) return null;
+
+        JSONArray arr = new JSONArray(json);
+        if (arr.length() > 0) {
+            return arr.getJSONObject(0).getString("BillCode");
         }
+    } catch (Exception e) {
+        System.out.println("ParseBillCode error: " + e.getMessage());
     }
+    return null;
+}
 }

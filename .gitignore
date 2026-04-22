@@ -2,7 +2,7 @@
 /build/
 /dist/
 
-# NetBeans private settings (user/machine-specific)
+# NetBeans private settings
 /nbproject/private/
 
 # IDE / OS noise
@@ -16,11 +16,8 @@ Thumbs.db
 .env
 .env.*
 
-# Local payment config (do not commit secrets)
+# Local payment config (secrets)
 /web/WEB-INF/toyyibpay.properties
 
 # Local tooling downloads
 /.tools/
-
-# Local dependency jars (downloaded by scripts)
-/web/WEB-INF/lib/*.jar
