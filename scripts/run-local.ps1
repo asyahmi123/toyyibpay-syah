@@ -131,8 +131,16 @@ if (-not (Test-Path -LiteralPath $toyCfg)) {
 # --- Configure Tomcat port ---
 $serverXml = Join-Path $tomcatHome "conf\\server.xml"
 $serverXmlText = Get-Content -LiteralPath $serverXml -Raw
-if ($serverXmlText -match 'Connector port=\"8080\"') {
+$updated = $false
+$pattern = '(<Connector\s+port=")\d+(".*protocol="HTTP/1\.1")'
+if ($serverXmlText -match $pattern) {
+  $serverXmlText = [regex]::Replace($serverXmlText, $pattern, ('$1{0}$2' -f $Port), 1)
+  $updated = $true
+} elseif ($serverXmlText -match 'Connector port=\"8080\"') {
   $serverXmlText = $serverXmlText -replace 'Connector port=\"8080\"', ('Connector port="{0}"' -f $Port)
+  $updated = $true
+}
+if ($updated) {
   Set-Content -LiteralPath $serverXml -Value $serverXmlText -Encoding UTF8
   Write-Host "Tomcat HTTP port set to $Port"
 }
@@ -180,8 +188,16 @@ Write-Host ("Open: http://localhost:{0}/S70632_Masjid_Management_System/" -f $Po
 Write-Host ""
 if ($StartTomcat) {
   Write-Host "Starting Tomcat (Ctrl+C to stop)..."
-  & (Join-Path $tomcatHome "bin\\catalina.bat") run
+  $env:CATALINA_HOME = $tomcatHome
+  $env:CATALINA_BASE = $tomcatHome
+  Push-Location (Join-Path $tomcatHome "bin")
+  try {
+    & .\\catalina.bat run
+  } finally {
+    Pop-Location
+  }
 } else {
   Write-Host "Tomcat not started. To start it:"
-  Write-Host ("  `"{0}`" run" -f (Join-Path $tomcatHome "bin\\catalina.bat"))
+  Write-Host ("  cd `"{0}`"" -f (Join-Path $tomcatHome "bin"))
+  Write-Host "  .\\catalina.bat run"
 }
